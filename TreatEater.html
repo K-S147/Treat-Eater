@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treat Eater - Upgraded Snake Game</title>
+    <style>
+        :root {
+            --bg-color: #1a2f1a;
+            --text-color: #e0f0e0;
+            --snake-head: #ff0000;
+            --snake-body: #000000;
+            --small-treat: #ff0000;
+            --big-treat: #c0c0c0;
+            --grid-color: #2a4a2a;
+            --button-bg: #3a6a3a;
+            --button-hover: #4a7a4a;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .active {
+            display: flex;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            text-align: center;
+        }
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            color: #4CAF50;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+        }
+        .form-group {
+            margin-bottom: 15px;
+            width: 300px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2a4a2a;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+            width: 200px;
+        }
+        button:hover {
+            background-color: var(--button-hover);
+        }
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .submenu {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 512px;
+            font-size: 1.2rem;
+        }
+        #game-board {
+            width: 512px;
+            height: 512px;
+            display: grid;
+            grid-template-columns: repeat(32, 1fr);
+            grid-template-rows: repeat(32, 1fr);
+            border: 2px solid var(--grid-color);
+            background-color: #1a2f1a;
+        }
+        .cell {
+            width: 16px;
+            height: 16px;
+        }
+        .snake-head {
+            background-color: var(--snake-head);
+            border-radius: 3px;
+        }
+        .snake-body {
+            background-color: var(--snake-body);
+            border-radius: 2px;
+        }
+        .small-treat {
+            background-color: var(--small-treat);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        .big-treat {
+            background-color: var(--big-treat);
+            border-radius: 30%;
+            animation: glow 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px var(--big-treat); }
+            50% { box-shadow: 0 0 15px var(--big-treat); }
+            100% { box-shadow: 0 0 5px var(--big-treat); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--bg-color);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+        }
+        .color-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .color-option.selected {
+            border: 2px solid white;
+        }
+        .saved-games-list {
+            max-height: 300px;
+            overflow-y: auto;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .saved-game-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #2a4a2a;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .saved-game-item:hover {
+            background-color: #3a5a3a;
+        }
+        .high-scores-list {
+            max-height: 400px;
+            overflow-y: auto;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .high-score-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #2a4a2a;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .help-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #2a4a2a;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .help-section {
+            margin-bottom: 15px;
+        }
+        .win-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 200;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .crown {
+            font-size: 5rem;
+            color: gold;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .mythical-snake {
+            font-size: 3rem;
+            color: gold;
+            text-align: center;
+            animation: glow-text 2s infinite;
+        }
+        @keyframes glow-text {
+            0%, 100% { text-shadow: 0 0 10px gold; }
+            50% { text-shadow: 0 0 20px gold, 0 0 30px gold; }
+        }
+        .snake-bowing {
+            font-size: 2rem;
+            margin: 10px;
+            animation: bow 2s infinite;
+        }
+        @keyframes bow {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(10px) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+        <div class="logo">🐍 Treat Eater</div>
+        <h1>Welcome to Treat Eater</h1>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Enter your username">
+        </div>
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" min="1" max="120" placeholder="Enter your age">
+        </div>
+        <button id="login-btn">Start Game</button>
+    </div>
+    <!-- Main Menu Screen -->
+    <div id="main-menu-screen" class="screen">
+        <div class="logo">🐍 Treat Eater</div>
+        <h1>Main Menu</h1>
+        <div class="menu-container">
+            <button id="new-game-btn">New Game</button>
+            <button id="continue-btn" disabled>Continue</button>
+            <button id="save-menu-btn">Save</button>
+            <div id="save-submenu" class="submenu">
+                <button id="save-game-btn">Save The Game</button>
+                <button id="saved-games-btn">Saved Games</button>
+                <button id="auto-save-btn">Turn On Auto Save</button>
+            </div>
+            <button id="high-score-btn">High Score</button>
+            <button id="edit-btn">Edit (Customization)</button>
+            <button id="help-btn">Help</button>
+        </div>
+    </div>
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <h2>Treat Eater</h2>
+            <div class="game-info">
+                <div>Score: <span id="score">0</span></div>
+                <div>Speed: <span id="speed-level">1</span></div>
+                <div>Small Treats Eaten: <span id="small-treats">0</span></div>
+            </div>
+            <div id="game-board"></div>
+            <div class="game-controls">
+                <button id="pause-btn">Pause</button>
+                <button id="menu-btn">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+    <!-- Saved Games Modal -->
+    <div id="saved-games-modal" class="modal">
+        <div class="modal-content">
+            <h2>Saved Games</h2>
+            <div id="saved-games-list" class="saved-games-list">
+                <!-- Saved games will be listed here -->
+            </div>
+            <button id="close-saved-games">Close</button>
+        </div>
+    </div>
+    <!-- High Score Modal -->
+    <div id="high-score-modal" class="modal">
+        <div class="modal-content">
+            <h2>High Scores</h2>
+            <div id="high-scores-list" class="high-scores-list">
+                <!-- High scores will be listed here -->
+            </div>
+            <button id="close-high-scores">Close</button>
+        </div>
+    </div>
+    <!-- Customization Modal -->
+    <div id="customization-modal" class="modal">
+        <div class="modal-content">
+            <h2>Customization</h2>
+            <h3>Background Color</h3>
+            <div class="color-options" id="bg-color-options">
+                <div class="color-option selected" style="background-color: #1a2f1a;" data-color="#1a2f1a"></div>
+                <div class="color-option" style="background-color: #0f1f0f;" data-color="#0f1f0f"></div>
+                <div class="color-option" style="background-color: #2a1f2a;" data-color="#2a1f2a"></div>
+            </div>
+            <h3>Snake Head Color</h3>
+            <div class="color-options" id="snake-head-options">
+                <div class="color-option selected" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background-color: #ff7f00;" data-color="#ff7f00"></div>
+                <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                <div class="color-option" style="background-color: #4b0082;" data-color="#4b0082"></div>
+                <div class="color-option" style="background-color: #8b00ff;" data-color="#8b00ff"></div>
+                <div class="color-option" style="background-color: #000000;" data-color="#000000"></div>
+                <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                <div class="color-option" style="background-color: #808080;" data-color="#808080"></div>
+            </div>
+            <h3>Snake Body Color</h3>
+            <div class="color-options" id="snake-body-options">
+                <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
+                <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background-color: #ff7f00;" data-color="#ff7f00"></div>
+                <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                <div class="color-option" style="background-color: #4b0082;" data-color="#4b0082"></div>
+                <div class="color-option" style="background-color: #8b00ff;" data-color="#8b00ff"></div>
+                <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                <div class="color-option" style="background-color: #808080;" data-color="#808080"></div>
+            </div>
+            <h3>Small Treat Color</h3>
+            <div class="color-options" id="small-treat-options">
+                <div class="color-option selected" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background-color: #ff7f00;" data-color="#ff7f00"></div>
+                <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                <div class="color-option" style="background-color: #4b0082;" data-color="#4b0082"></div>
+                <div class="color-option" style="background-color: #8b00ff;" data-color="#8b00ff"></div>
+            </div>
+            <h3>Big Treat Color</h3>
+            <div class="color-options" id="big-treat-options">
+                <div class="color-option" style="background-color: #ffd700;" data-color="#ffd700"></div>
+                <div class="color-option selected" style="background-color: #c0c0c0;" data-color="#c0c0c0"></div>
+                <div class="color-option" style="background-color: #e5e4e2;" data-color="#e5e4e2"></div>
+            </div>
+            <button id="apply-customization">Apply Changes</button>
+            <button id="close-customization">Close</button>
+        </div>
+    </div>
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <h2>Game Help</h2>
+            <div class="help-content">
+                <div class="help-section">
+                    <h3>How to Play</h3>
+                    <p>Use the arrow keys to control the snake. Eat the small red treats to grow and earn points. After eating 10 small treats, a big silver treat will appear for 5 seconds. Eat it for bonus points!</p>
+                </div>
+                <div class="help-section">
+                    <h3>Scoring</h3>
+                    <p>Small treats: 5 points and +1 block to snake length</p>
+                    <p>Big treats: 10 points and +2 blocks to snake length</p>
+                </div>
+                <div class="help-section">
+                    <h3>Speed Levels</h3>
+                    <p>The snake speeds up as your score increases:</p>
+                    <p>Level 1 (0-15 points): 2 blocks per second</p>
+                    <p>Level 2 (16-255 points): 4 blocks per second</p>
+                    <p>Level 3 (256+ points): 8 blocks per second (max)</p>
+                </div>
+                <div class="help-section">
+                    <h3>Saving Games</h3>
+                    <p>You can save your game progress manually or enable auto-save. A maximum of 10 saved games are stored.</p>
+                </div>
+                <div class="help-section">
+                    <h3>Winning Conditions</h3>
+                    <p>If you fill the entire board with your snake, you win! For a perfect game (not missing any big treats), you'll get a special reward.</p>
+                </div>
+            </div>
+            <button id="close-help">Close</button>
+        </div>
+    </div>
+    <!-- Win Animation -->
+    <div id="win-animation" class="win-animation">
+        <div class="crown">👑</div>
+        <h1 id="win-message">Player Wins!</h1>
+        <h2 id="player-name-win"></h2>
+        <button id="continue-after-win">Continue to Menu</button>
+    </div>
+    <!-- Mythical Snake Animation -->
+    <div id="mythical-animation" class="win-animation">
+        <div class="mythical-snake">🐉 MYTHICAL SNAKE 🐉</div>
+        <h1 id="mythical-message">Player Has Become The Mythical Snake!</h1>
+        <h2 id="player-name-mythical"></h2>
+        <div class="snake-bowing">🐍 🙇 🐍 🙇 🐍</div>
+        <button id="continue-after-mythical">Continue to Menu</button>
+    </div>
+    <script>
+        // Game variables
+        let gameState = {
+            player: {
+                name: '',
+                age: 0
+            },
+            game: {
+                score: 0,
+                speed: 1,
+                smallTreatsEaten: 0,
+                bigTreatsEaten: 0,
+                snake: [],
+                direction: 'right',
+                nextDirection: 'right',
+                treat: null,
+                bigTreat: null,
+                bigTreatTimer: null,
+                isPaused: false,
+                gameInterval: null,
+                boardSize: 32,
+                isGameOver: false
+            },
+            settings: {
+                autoSave: false,
+                bgColor: '#1a2f1a',
+                snakeHeadColor: '#ff0000',
+                snakeBodyColor: '#000000',
+                smallTreatColor: '#ff0000',
+                bigTreatColor: '#c0c0c0'
+            }
+        };
+        const loginScreen = document.getElementById('login-screen');
+        const mainMenuScreen = document.getElementById('main-menu-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const savedGamesModal = document.getElementById('saved-games-modal');
+        const highScoreModal = document.getElementById('high-score-modal');
+        const customizationModal = document.getElementById('customization-modal');
+        const helpModal = document.getElementById('help-modal');
+        const winAnimation = document.getElementById('win-animation');
+        const mythicalAnimation = document.getElementById('mythical-animation');
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlayerInfo();
+            loadSettings();
+            loadHighScores();
+            initGameBoard();
+            setupEventListeners();
+        });
+        function setupEventListeners() {
+            document.getElementById('login-btn').addEventListener('click', handleLogin);
+            document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+            document.getElementById('continue-btn').addEventListener('click', continueGame);
+            document.getElementById('save-menu-btn').addEventListener('click', toggleSaveSubmenu);
+            document.getElementById('save-game-btn').addEventListener('click', saveGame);
+            document.getElementById('saved-games-btn').addEventListener('click', showSavedGames);
+            document.getElementById('auto-save-btn').addEventListener('click', toggleAutoSave);
+            document.getElementById('high-score-btn').addEventListener('click', showHighScores);
+            document.getElementById('edit-btn').addEventListener('click', showCustomization);
+            document.getElementById('help-btn').addEventListener('click', showHelp);
+            document.getElementById('pause-btn').addEventListener('click', togglePause);
+            document.getElementById('menu-btn').addEventListener('click', returnToMenu);
+            document.getElementById('close-saved-games').addEventListener('click', () => savedGamesModal.style.display = 'none');
+            document.getElementById('close-high-scores').addEventListener('click', () => highScoreModal.style.display = 'none');
+            document.getElementById('close-customization').addEventListener('click', () => customizationModal.style.display = 'none');
+            document.getElementById('close-help').addEventListener('click', () => helpModal.style.display = 'none');
+            document.getElementById('apply-customization').addEventListener('click', applyCustomization);
+            document.getElementById('continue-after-win').addEventListener('click', () => {
+                winAnimation.style.display = 'none';
+                showScreen(mainMenuScreen);
+            });
+            document.getElementById('continue-after-mythical').addEventListener('click', () => {
+                mythicalAnimation.style.display = 'none';
+                showScreen(mainMenuScreen);
+            });
+            document.addEventListener('keydown', handleKeyPress);
+            setupColorSelection();
+        }
+        function setupColorSelection() {
+            const bgColorOptions = document.querySelectorAll('#bg-color-options .color-option');
+            bgColorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    bgColorOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+            const headColorOptions = document.querySelectorAll('#snake-head-options .color-option');
+            headColorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    headColorOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+            const bodyColorOptions = document.querySelectorAll('#snake-body-options .color-option');
+            bodyColorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    bodyColorOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+            const smallTreatOptions = document.querySelectorAll('#small-treat-options .color-option');
+            smallTreatOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    smallTreatOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+            const bigTreatOptions = document.querySelectorAll('#big-treat-options .color-option');
+            bigTreatOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    bigTreatOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        }
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const age = document.getElementById('age').value;
+            if (!username || !age) {
+                alert('Please enter both username and age');
+                return;
+            }
+            gameState.player.name = username;
+            gameState.player.age = parseInt(age);
+            savePlayerInfo();
+            showScreen(mainMenuScreen);
+            checkForSavedGame();
+        }
+        function showScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screen.classList.add('active');
+        }
+        function initGameBoard() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            for (let i = 0; i < gameState.game.boardSize * gameState.game.boardSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${i}`;
+                gameBoard.appendChild(cell);
+            }
+        }
+        function startNewGame() {
+            const savedGame = localStorage.getItem('treatEaterCurrentGame');
+            if (savedGame) {
+                if (confirm('There is a game in progress. Do you want to save it before starting a new game?')) {
+                    saveGame();
+                } else {
+                    localStorage.removeItem('treatEaterCurrentGame');
+                }
+            }
+            resetGame();
+            showScreen(gameScreen);
+            startGame();
+        }
+        function continueGame() {
+            const savedGame = localStorage.getItem('treatEaterCurrentGame');
+            if (savedGame) {
+                gameState.game = JSON.parse(savedGame);
+                updateGameDisplay();
+                showScreen(gameScreen);
+                startGame();
+            }
+        }
+        function checkForSavedGame() {
+            const savedGame = localStorage.getItem('treatEaterCurrentGame');
+            const continueBtn = document.getElementById('continue-btn');
+            if (savedGame) {
+                continueBtn.disabled = false;
+            } else {
+                continueBtn.disabled = true;
+            }
+        }
+        function resetGame() {
+            gameState.game = {
+                score: 0,
+                speed: 1,
+                smallTreatsEaten: 0,
+                bigTreatsEaten: 0,
+                snake: [
+                    {x: 15, y: 15},
+                    {x: 14, y: 15},
+                    {x: 13, y: 15},
+                    {x: 12, y: 15}
+                ],
+                direction: 'right',
+                nextDirection: 'right',
+                treat: null,
+                bigTreat: null,
+                bigTreatTimer: null,
+                isPaused: false,
+                gameInterval: null,
+                boardSize: 32,
+                isGameOver: false
+            };
+            generateTreat();
+            updateGameDisplay();
+        }
+        function startGame() {
+            if (gameState.game.gameInterval) {
+                clearInterval(gameState.game.gameInterval);
+            }
+            const speed = calculateSpeed();
+            gameState.game.gameInterval = setInterval(gameLoop, 1000 / speed);
+            updateGameDisplay();
+        }
+        function calculateSpeed() {
+            const score = gameState.game.score;
+            if (score >= 256) return 8;
+            if (score >= 16) return 4;
+            return 2;    
+        }
+        function gameLoop() {
+            if (gameState.game.isPaused || gameState.game.isGameOver) return;
+            gameState.game.direction = gameState.game.nextDirection;
+            moveSnake();
+            if (checkCollisions()) {
+                gameOver();
+                return;
+            }
+            checkTreatCollision();
+            updateGameDisplay();
+            const newSpeed = calculateSpeed();
+            if (newSpeed !== gameState.game.speed) {
+                gameState.game.speed = newSpeed;
+                clearInterval(gameState.game.gameInterval);
+                gameState.game.gameInterval = setInterval(gameLoop, 1000 / newSpeed);
+                document.getElementById('speed-level').textContent = 
+                    newSpeed === 8 ? '3' : newSpeed === 4 ? '2' : '1';
+            }
+            if (gameState.game.snake.length >= gameState.game.boardSize * gameState.game.boardSize) {
+                winGame();
+            }
+            if (gameState.settings.autoSave) {
+                saveCurrentGame();
+            }
+        }
+        function moveSnake() {
+            const head = {...gameState.game.snake[0]};
+            switch (gameState.game.direction) {
+                case 'up': head.y--; break;
+                case 'down': head.y++; break;
+                case 'left': head.x--; break;
+                case 'right': head.x++; break;
+            }
+            if (head.x < 0) head.x = gameState.game.boardSize - 1;
+            if (head.x >= gameState.game.boardSize) head.x = 0;
+            if (head.y < 0) head.y = gameState.game.boardSize - 1;
+            if (head.y >= gameState.game.boardSize) head.y = 0;
+            gameState.game.snake.unshift(head);
+            if (!gameState.game.justAte) {
+                gameState.game.snake.pop();
+            } else {
+                gameState.game.justAte = false;
+            }
+        }
+        function checkCollisions() {
+            const head = gameState.game.snake[0];
+            for (let i = 1; i < gameState.game.snake.length; i++) {
+                if (head.x === gameState.game.snake[i].x && head.y === gameState.game.snake[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        function checkTreatCollision() {
+            const head = gameState.game.snake[0];
+            if (gameState.game.treat && head.x === gameState.game.treat.x && head.y === gameState.game.treat.y) {
+                playSound('eat');
+                gameState.game.score += 5;
+                gameState.game.smallTreatsEaten++;
+                gameState.game.justAte = true;
+                generateTreat();
+                if (gameState.game.smallTreatsEaten % 10 === 0) {
+                    spawnBigTreat();
+                }
+            }
+            if (gameState.game.bigTreat && head.x === gameState.game.bigTreat.x && head.y === gameState.game.bigTreat.y) {
+                playSound('big-eat');
+                gameState.game.score += 10;
+                gameState.game.bigTreatsEaten++;
+                gameState.game.justAte = true;
+                gameState.game.justAteBig = true;
+                clearTimeout(gameState.game.bigTreatTimer);
+                gameState.game.bigTreat = null;
+            }
+        }
+        function generateTreat() {
+            let treat;
+            let attempts = 0;
+            do {
+                treat = {
+                    x: Math.floor(Math.random() * gameState.game.boardSize),
+                    y: Math.floor(Math.random() * gameState.game.boardSize)
+                };
+                attempts++;
+            } while (isPositionOccupied(treat) && attempts < 100);
+            
+            gameState.game.treat = treat;
+        }
+        function spawnBigTreat() {
+            let treat;
+            let attempts = 0;
+            do {
+                treat = {
+                    x: Math.floor(Math.random() * gameState.game.boardSize),
+                    y: Math.floor(Math.random() * gameState.game.boardSize)
+                };
+                attempts++;
+            } while (isPositionOccupied(treat) && attempts < 100);
+            
+            gameState.game.bigTreat = treat;
+            gameState.game.bigTreatTimer = setTimeout(() => {
+                if (gameState.game.bigTreat) {
+                    gameState.game.bigTreat = null;
+                    updateGameDisplay();
+                }
+            }, 5000);
+        }
+        function isPositionOccupied(position) {
+            for (const segment of gameState.game.snake) {
+                if (segment.x === position.x && segment.y === position.y) {
+                    return true;
+                }
+            }
+            if (gameState.game.treat && gameState.game.treat.x === position.x && gameState.game.treat.y === position.y) {
+                return true;
+            }
+            if (gameState.game.bigTreat && gameState.game.bigTreat.x === position.x && gameState.game.bigTreat.y === position.y) {
+                return true;
+            }
+            return false;
+        }
+        function updateGameDisplay() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.className = 'cell';
+                cell.style.backgroundColor = '';
+            });
+            gameState.game.snake.forEach((segment, index) => {
+                const cellIndex = segment.y * gameState.game.boardSize + segment.x;
+                const cell = document.getElementById(`cell-${cellIndex}`);
+                if (index === 0) {
+                    cell.classList.add('snake-head');
+                    cell.style.backgroundColor = gameState.settings.snakeHeadColor;
+                } else {
+                    cell.classList.add('snake-body');
+                    cell.style.backgroundColor = gameState.settings.snakeBodyColor;
+                }
+            });
+            if (gameState.game.treat) {
+                const treatIndex = gameState.game.treat.y * gameState.game.boardSize + gameState.game.treat.x;
+                const treatCell = document.getElementById(`cell-${treatIndex}`);
+                treatCell.classList.add('small-treat');
+                treatCell.style.backgroundColor = gameState.settings.smallTreatColor;
+            }
+            if (gameState.game.bigTreat) {
+                const bigTreatIndex = gameState.game.bigTreat.y * gameState.game.boardSize + gameState.game.bigTreat.x;
+                const bigTreatCell = document.getElementById(`cell-${bigTreatIndex}`);
+                bigTreatCell.classList.add('big-treat');
+                bigTreatCell.style.backgroundColor = gameState.settings.bigTreatColor;
+            }
+            document.getElementById('score').textContent = gameState.game.score;
+            document.getElementById('small-treats').textContent = gameState.game.smallTreatsEaten;
+        }
+        function handleKeyPress(e) {
+            if (gameScreen.classList.contains('active') && !gameState.game.isPaused) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        if (gameState.game.direction !== 'down') {
+                            gameState.game.nextDirection = 'up';
+                        }
+                        break;
+                    case 'ArrowDown':
+                        if (gameState.game.direction !== 'up') {
+                            gameState.game.nextDirection = 'down';
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        if (gameState.game.direction !== 'right') {
+                            gameState.game.nextDirection = 'left';
+                        }
+                        break;
+                    case 'ArrowRight':
+                        if (gameState.game.direction !== 'left') {
+                            gameState.game.nextDirection = 'right';
+                        }
+                        break;
+                }
+            }
+        }
+        function togglePause() {
+            gameState.game.isPaused = !gameState.game.isPaused;
+            document.getElementById('pause-btn').textContent = gameState.game.isPaused ? 'Resume' : 'Pause';
+            
+            if (gameState.game.isPaused) {
+                clearInterval(gameState.game.gameInterval);
+            } else {
+                startGame();
+            }
+        }
+        function returnToMenu() {
+            if (gameState.game.gameInterval) {
+                clearInterval(gameState.game.gameInterval);
+            }
+            if (!gameState.game.isGameOver) {
+                if (confirm('Do you want to save your game before returning to the menu?')) {
+                    saveGame();
+                }
+            }
+            showScreen(mainMenuScreen);
+            checkForSavedGame();
+        }
+        function gameOver() {
+            gameState.game.isGameOver = true;
+            clearInterval(gameState.game.gameInterval);
+            addHighScore(gameState.game.score, false);
+            alert(`Game Over! Your score: ${gameState.game.score}`);
+            showScreen(mainMenuScreen);
+        }
+        function winGame() {
+            gameState.game.isGameOver = true;
+            clearInterval(gameState.game.gameInterval);
+            const totalPossibleBigTreats = Math.floor(gameState.game.smallTreatsEaten / 10);
+            const isPerfectGame = gameState.game.bigTreatsEaten === totalPossibleBigTreats;
+            addHighScore(gameState.game.score, isPerfectGame);
+            if (isPerfectGame) {
+                document.getElementById('player-name-mythical').textContent = gameState.player.name;
+                mythicalAnimation.style.display = 'flex';
+            } else {
+                document.getElementById('player-name-win').textContent = gameState.player.name;
+                winAnimation.style.display = 'flex';
+            }
+        }
+        function playSound(type) {
+            console.log(`Playing ${type} sound`);
+        }
+        function toggleSaveSubmenu() {
+            const submenu = document.getElementById('save-submenu');
+            submenu.style.display = submenu.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function saveGame() {
+            saveCurrentGame();
+            alert('Game saved successfully!');
+            checkForSavedGame();
+        }
+        function saveCurrentGame() {
+            localStorage.setItem('treatEaterCurrentGame', JSON.stringify(gameState.game));
+            const savedGames = JSON.parse(localStorage.getItem('treatEaterSavedGames') || '[]');
+            const saveData = {
+                gameState: gameState.game,
+                player: gameState.player,
+                timestamp: new Date().toISOString(),
+                score: gameState.game.score
+            };
+            savedGames.unshift(saveData);
+            if (savedGames.length > 10) {
+                savedGames.splice(10);
+            }
+            localStorage.setItem('treatEaterSavedGames', JSON.stringify(savedGames));
+        }
+        function showSavedGames() {
+            const savedGames = JSON.parse(localStorage.getItem('treatEaterSavedGames') || '[]');
+            const savedGamesList = document.getElementById('saved-games-list');
+            savedGamesList.innerHTML = '';
+            if (savedGames.length === 0) {
+                savedGamesList.innerHTML = '<p>No saved games found.</p>';
+            } else {
+                savedGames.forEach((game, index) => {
+                    const gameItem = document.createElement('div');
+                    gameItem.className = 'saved-game-item';
+                    gameItem.innerHTML = `
+                        <div>Game ${index + 1}</div>
+                        <div>Score: ${game.score}</div>
+                        <div>${new Date(game.timestamp).toLocaleString()}</div>
+                    `;
+                    gameItem.addEventListener('click', () => loadSavedGame(index));
+                    savedGamesList.appendChild(gameItem);
+                });
+            }
+            savedGamesModal.style.display = 'flex';
+        }
+        function loadSavedGame(index) {
+            const savedGames = JSON.parse(localStorage.getItem('treatEaterSavedGames') || '[]');
+            if (index >= 0 && index < savedGames.length) {
+                gameState.game = savedGames[index].gameState;
+                updateGameDisplay();
+                showScreen(gameScreen);
+                startGame();
+                savedGamesModal.style.display = 'none';
+            }
+        }
+        function toggleAutoSave() {
+            gameState.settings.autoSave = !gameState.settings.autoSave;
+            document.getElementById('auto-save-btn').textContent = 
+                gameState.settings.autoSave ? 'Turn Off Auto Save' : 'Turn On Auto Save';
+            saveSettings();
+        }
+        function showHighScores() {
+            const highScores = JSON.parse(localStorage.getItem('treatEaterHighScores') || '[]');
+            const highScoresList = document.getElementById('high-scores-list');
+            highScoresList.innerHTML = '';
+            if (highScores.length === 0) {
+                highScoresList.innerHTML = '<p>No high scores yet. Play a game to get on the board!</p>';
+            } else {
+                highScores.forEach((score, index) => {
+                    const scoreItem = document.createElement('div');
+                    scoreItem.className = 'high-score-item';
+                    scoreItem.innerHTML = `
+                        <div>${index + 1}. ${score.playerName} - ${score.score}</div>
+                        <div>${new Date(score.timestamp).toLocaleString()}</div>
+                        ${score.isPerfect ? '<div>✨ Perfect Game!</div>' : ''}
+                    `;
+                    highScoresList.appendChild(scoreItem);
+                });
+            }
+            highScoreModal.style.display = 'flex';
+        }
+        function addHighScore(score, isPerfect) {
+            const highScores = JSON.parse(localStorage.getItem('treatEaterHighScores') || '[]');
+            highScores.push({
+                playerName: gameState.player.name,
+                score: score,
+                timestamp: new Date().toISOString(),
+                isPerfect: isPerfect
+            });
+            highScores.sort((a, b) => b.score - a.score);
+            if (highScores.length > 100) {
+                highScores.splice(100);
+            }
+            localStorage.setItem('treatEaterHighScores', JSON.stringify(highScores));
+        }
+        function showCustomization() {
+            setColorSelection('bg-color-options', gameState.settings.bgColor);
+            setColorSelection('snake-head-options', gameState.settings.snakeHeadColor);
+            setColorSelection('snake-body-options', gameState.settings.snakeBodyColor);
+            setColorSelection('small-treat-options', gameState.settings.smallTreatColor);
+            setColorSelection('big-treat-options', gameState.settings.bigTreatColor);
+            customizationModal.style.display = 'flex';
+        }
+        function setColorSelection(containerId, color) {
+            const options = document.querySelectorAll(`#${containerId} .color-option`);
+            options.forEach(option => {
+                if (option.getAttribute('data-color') === color) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+        function applyCustomization() {
+            gameState.settings.bgColor = getSelectedColor('bg-color-options');
+            gameState.settings.snakeHeadColor = getSelectedColor('snake-head-options');
+            gameState.settings.snakeBodyColor = getSelectedColor('snake-body-options');
+            gameState.settings.smallTreatColor = getSelectedColor('small-treat-options');
+            gameState.settings.bigTreatColor = getSelectedColor('big-treat-options');
+            document.documentElement.style.setProperty('--bg-color', gameState.settings.bgColor);
+            document.documentElement.style.setProperty('--snake-head', gameState.settings.snakeHeadColor);
+            document.documentElement.style.setProperty('--snake-body', gameState.settings.snakeBodyColor);
+            document.documentElement.style.setProperty('--small-treat', gameState.settings.smallTreatColor);
+            document.documentElement.style.setProperty('--big-treat', gameState.settings.bigTreatColor);
+            saveSettings();
+            if (gameScreen.classList.contains('active')) {
+                updateGameDisplay();
+            }
+            customizationModal.style.display = 'none';
+        }
+        function getSelectedColor(containerId) {
+            const selected = document.querySelector(`#${containerId} .color-option.selected`);
+            return selected ? selected.getAttribute('data-color') : '#000000';
+        }
+        function showHelp() {
+            helpModal.style.display = 'flex';
+        }
+        function loadPlayerInfo() {
+            const savedPlayer = localStorage.getItem('treatEaterPlayer');
+            if (savedPlayer) {
+                gameState.player = JSON.parse(savedPlayer);
+                document.getElementById('username').value = gameState.player.name;
+                document.getElementById('age').value = gameState.player.age;
+            }
+        }
+        function savePlayerInfo() {
+            localStorage.setItem('treatEaterPlayer', JSON.stringify(gameState.player));
+        }
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('treatEaterSettings');
+            if (savedSettings) {
+                gameState.settings = {...gameState.settings, ...JSON.parse(savedSettings)};
+                document.documentElement.style.setProperty('--bg-color', gameState.settings.bgColor);
+                document.documentElement.style.setProperty('--snake-head', gameState.settings.snakeHeadColor);
+                document.documentElement.style.setProperty('--snake-body', gameState.settings.snakeBodyColor);
+                document.documentElement.style.setProperty('--small-treat', gameState.settings.smallTreatColor);
+                document.documentElement.style.setProperty('--big-treat', gameState.settings.bigTreatColor);
+                document.getElementById('auto-save-btn').textContent = 
+                    gameState.settings.autoSave ? 'Turn Off Auto Save' : 'Turn On Auto Save';
+            }
+        }
+        function saveSettings() {
+            localStorage.setItem('treatEaterSettings', JSON.stringify(gameState.settings));
+        }
+        function loadHighScores() {
+            if (!localStorage.getItem('treatEaterHighScores')) {
+                localStorage.setItem('treatEaterHighScores', '[]');
+            }
+        }
+    </script>
+</body>
+</html>
