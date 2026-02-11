@@ -664,9 +664,10 @@
         }
         function calculateSpeed() {
             const score = gameState.game.score;
-            if (score >= 256) return 8;
-            if (score >= 16) return 4;
-            return 2;    
+            if (score >= 128) return 64;
+            if (score >= 64) return 32;
+            if (score >= 16) return 16;
+            return 8;    
         }
         function gameLoop() {
             if (gameState.game.isPaused || gameState.game.isGameOver) return;
